@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.env
+*.pem
+*.log
+.DS_Store
+nightwatch.db
+/tmp/
