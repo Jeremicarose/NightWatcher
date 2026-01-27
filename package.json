@@ -9,7 +9,13 @@
     "start": "node dist/index.js",
     "test": "tsx src/test-runner.ts"
   },
-  "keywords": ["ci", "github", "automation", "gemini", "ai"],
+  "keywords": [
+    "ci",
+    "github",
+    "automation",
+    "gemini",
+    "ai"
+  ],
   "author": "",
   "license": "MIT",
   "description": "Self-healing CI/CD agent that fixes failed builds autonomously",
@@ -17,6 +23,7 @@
     "@google/generative-ai": "^0.24.1",
     "@octokit/rest": "^22.0.1",
     "@octokit/webhooks": "^14.2.0",
+    "adm-zip": "^0.5.16",
     "better-sqlite3": "^12.6.2",
     "dockerode": "^4.0.9",
     "dotenv": "^17.2.3",
@@ -25,6 +32,7 @@
     "uuid": "^13.0.0"
   },
   "devDependencies": {
+    "@types/adm-zip": "^0.5.7",
     "@types/better-sqlite3": "^7.6.13",
     "@types/dockerode": "^4.0.1",
     "@types/express": "^5.0.6",
