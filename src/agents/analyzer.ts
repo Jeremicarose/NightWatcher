@@ -49,7 +49,7 @@ export async function analyzeFailureLogs(logContent: string): Promise<FailureAna
     model: 'gemini-2.5-flash',
     generationConfig: {
       temperature: 0.1, // Low temperature for consistent structured output
-      maxOutputTokens: 2048,
+      maxOutputTokens: 4096,
     }
   });
 
