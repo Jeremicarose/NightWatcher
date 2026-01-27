@@ -46,7 +46,7 @@ export async function analyzeFailureLogs(logContent: string): Promise<FailureAna
 
   // Use Gemini Pro for log analysis
   const model = genAI.getGenerativeModel({
-    model: 'gemini-2.0-flash',
+    model: 'gemini-pro',
     generationConfig: {
       temperature: 0.1, // Low temperature for consistent structured output
       maxOutputTokens: 2048,
