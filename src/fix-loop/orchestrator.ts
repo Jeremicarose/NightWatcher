@@ -1,6 +1,12 @@
 import { createLogger } from '../utils/logger.js';
 import { fetchWorkflowLogs, findFailingJobLog, truncateLog } from '../github/logs.js';
 import { analyzeFailureLogs } from '../agents/analyzer.js';
+import {
+  createFailure,
+  updateFailureAnalysis,
+  updateFailureStatus,
+  saveHealingResult
+} from '../db/client.js';
 import type { WorkflowRunPayload, HealingResult, FailureAnalysis } from '../types.js';
 
 const logger = createLogger('Orchestrator');
@@ -32,7 +38,19 @@ export async function processFailure(payload: WorkflowRunPayload): Promise<Heali
     fix_attempts: [],
   };
 
+  // Create database record for this failure
+  const failureId = createFailure(
+    runId,
+    repo,
+    sha,
+    workflow_run.head_branch,
+    workflow_run.name
+  );
+  logger.debug('Created failure record', { failureId });
+
   try {
+    updateFailureStatus(failureId, 'fetching_logs');
+
     // Step 1: Fetch CI logs
     logger.info('Step 1: Fetching CI logs...');
     const logs = await fetchWorkflowLogs(
@@ -60,8 +78,12 @@ export async function processFailure(payload: WorkflowRunPayload): Promise<Heali
 
     // Step 2: Analyze the failure
     logger.info('Step 2: Analyzing failure with Gemini...');
+    updateFailureStatus(failureId, 'analyzing');
     const analysis = await analyzeFailureLogs(truncatedLog);
     result.analysis = analysis;
+
+    // Save analysis to database
+    updateFailureAnalysis(failureId, analysis);
 
     logger.info('Analysis complete', {
       error_type: analysis.error_type,
@@ -98,7 +120,11 @@ export async function processFailure(payload: WorkflowRunPayload): Promise<Heali
     // TODO: Or create escalation issue if fix failed
 
     // For now, we've completed the analysis phase
+    updateFailureStatus(failureId, 'analysis_complete');
     logger.info('Processing complete (analysis phase only)', { result });
+
+    // Save final result to database
+    saveHealingResult(result);
 
     return result;
 
@@ -106,6 +132,10 @@ export async function processFailure(payload: WorkflowRunPayload): Promise<Heali
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     result.error = errorMessage;
     logger.error('Failed to process failure', { error: errorMessage, runId });
+
+    // Record the failure in database
+    updateFailureStatus(failureId, 'failed', errorMessage);
+
     return result;
   }
 }

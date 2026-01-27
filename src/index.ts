@@ -2,8 +2,12 @@ import express from 'express';
 import dotenv from 'dotenv';
 import { handleWebhook } from './webhook/handler.js';
 import { createLogger } from './utils/logger.js';
+import { initDatabase, getRecentFailures } from './db/client.js';
 
 dotenv.config();
+
+// Initialize database
+initDatabase();
 
 const logger = createLogger('Server');
 const app = express();
