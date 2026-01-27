@@ -1,0 +1,26 @@
+Run started at 2026-01-27T09:45:33Z
+============================= test session starts ==============================
+platform linux -- Python 3.11.4, pytest-7.4.0, pluggy-1.2.0
+rootdir: /home/runner/work/calculator/calculator
+collected 23 items
+
+tests/test_calculator.py .....F.....                                     [ 47%]
+tests/test_operations.py ............                                    [100%]
+
+=================================== FAILURES ===================================
+__________________________ test_divide_by_zero_returns_error ___________________
+
+    def test_divide_by_zero_returns_error():
+        calc = Calculator()
+        result = calc.divide(10, 0)
+>       assert result == {"error": "Division by zero"}
+E       AssertionError: assert None == {'error': 'Division by zero'}
+E        +  where None = <bound method Calculator.divide of <src.calculator.Calculator object at 0x7f8b8c0a1d90>>(10, 0)
+
+tests/test_calculator.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+Attempting division: 10 / 0
+=========================== short test summary info ============================
+FAILED tests/test_calculator.py::test_divide_by_zero_returns_error - AssertionError: assert None == {'error': 'Division by zero'}
+============================== 1 failed, 22 passed in 1.87s ====================
+Error: Process completed with exit code 1.

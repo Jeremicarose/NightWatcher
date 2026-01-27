@@ -1,0 +1,21 @@
+Run started at 2026-01-27T14:22:11Z
+============================= test session starts ==============================
+platform linux -- Python 3.11.4, pytest-7.4.0, pluggy-1.2.0
+rootdir: /home/runner/work/myapp/myapp
+collected 0 items / 1 error
+
+==================================== ERRORS ====================================
+___________________ ERROR collecting tests/test_payments.py ____________________
+ImportError while importing test module '/home/runner/work/myapp/myapp/tests/test_payments.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback (most recent call last):
+  File "/home/runner/work/myapp/myapp/tests/test_payments.py", line 3, in <module>
+    from src.payments import process_payment, PaymentGateway
+  File "/home/runner/work/myapp/myapp/src/payments.py", line 5, in <module>
+    from stripe_sdk import StripeClient
+ModuleNotFoundError: No module named 'stripe_sdk'
+=========================== short test summary info ============================
+ERROR tests/test_payments.py
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Errors !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 error in 0.12s
+Error: Process completed with exit code 1.
