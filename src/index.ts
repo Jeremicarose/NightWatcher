@@ -21,6 +21,12 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// View recent failures (for debugging/monitoring)
+app.get('/failures', (_req, res) => {
+  const failures = getRecentFailures(20);
+  res.json({ count: failures.length, failures });
+});
+
 // GitHub webhook endpoint
 app.post('/webhook', handleWebhook);
 
