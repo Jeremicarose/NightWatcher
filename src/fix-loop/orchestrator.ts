@@ -1,6 +1,7 @@
 import { createLogger } from '../utils/logger.js';
 import { fetchWorkflowLogs, findFailingJobLog, truncateLog } from '../github/logs.js';
 import { analyzeFailureLogs } from '../agents/analyzer.js';
+import { reproduceFailure, cleanupWorkDir } from '../sandbox/runner.js';
 import {
   createFailure,
   updateFailureAnalysis,
