@@ -101,11 +101,41 @@ export async function processFailure(payload: WorkflowRunPayload): Promise<Heali
       return result;
     }
 
-    // Step 3: Clone repo and reproduce failure (TODO)
-    logger.info('Step 3: Reproduction (not yet implemented)');
-    // TODO: Clone repo at SHA
-    // TODO: Set up Docker sandbox
-    // TODO: Run tests, confirm failure reproduces
+    // Step 3: Clone repo and reproduce failure
+    logger.info('Step 3: Reproducing failure in sandbox...');
+    updateFailureStatus(failureId, 'reproducing');
+
+    const reproResult = await reproduceFailure({
+      repo,
+      sha,
+      cloneUrl: repository.clone_url,
+    });
+
+    if (!reproResult.success) {
+      result.error = `Reproduction failed: ${reproResult.error}`;
+      logger.error('Failed to reproduce failure', { error: reproResult.error });
+      updateFailureStatus(failureId, 'failed', result.error);
+      return result;
+    }
+
+    if (!reproResult.reproduced) {
+      result.error = 'Failure did not reproduce - tests passed in sandbox';
+      logger.warn('Failure did not reproduce', { exitCode: reproResult.exitCode });
+      updateFailureStatus(failureId, 'not_reproduced');
+      // Cleanup work directory since we can't proceed
+      if (reproResult.workDir) {
+        cleanupWorkDir(reproResult.workDir);
+      }
+      return result;
+    }
+
+    logger.info('Failure reproduced successfully', {
+      exitCode: reproResult.exitCode,
+      workDir: reproResult.workDir,
+    });
+
+    // Store workDir for later steps
+    const workDir = reproResult.workDir;
 
     // Step 4: Generate regression test (TODO)
     logger.info('Step 4: Test generation (not yet implemented)');
@@ -120,9 +150,14 @@ export async function processFailure(payload: WorkflowRunPayload): Promise<Heali
     // TODO: Create PR with fix + test
     // TODO: Or create escalation issue if fix failed
 
-    // For now, we've completed the analysis phase
-    updateFailureStatus(failureId, 'analysis_complete');
-    logger.info('Processing complete (analysis phase only)', { result });
+    // Cleanup work directory
+    if (workDir) {
+      cleanupWorkDir(workDir);
+    }
+
+    // For now, we've completed the reproduction phase
+    updateFailureStatus(failureId, 'reproduced');
+    logger.info('Processing complete (reproduction phase)', { result });
 
     // Save final result to database
     saveHealingResult(result);
