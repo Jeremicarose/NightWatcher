@@ -7,10 +7,36 @@
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 LOG_FILE="$REPO_ROOT/logs/auto-commit.log"
+LOCK_FILE="$REPO_ROOT/logs/auto-commit.lock"
 INTERVAL=300  # 5 minutes in seconds
 
 # Ensure log directory exists
 mkdir -p "$REPO_ROOT/logs"
+
+# Check for existing instance (only in watch mode)
+check_lock() {
+    if [[ -f "$LOCK_FILE" ]]; then
+        local pid=$(cat "$LOCK_FILE")
+        if ps -p "$pid" > /dev/null 2>&1; then
+            echo "Auto-commit already running (PID: $pid)"
+            exit 0
+        else
+            # Stale lock file
+            rm -f "$LOCK_FILE"
+        fi
+    fi
+}
+
+# Create lock file
+create_lock() {
+    echo $$ > "$LOCK_FILE"
+}
+
+# Remove lock file on exit
+cleanup_lock() {
+    rm -f "$LOCK_FILE"
+}
+trap cleanup_lock EXIT
 
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
@@ -135,8 +161,9 @@ case "${1:-}" in
         ;;
     --watch|"")
         # Continuous watch mode (default)
-        log "🌙 NightWatcher auto-commit started (checking every 5 minutes)"
-        log "   Press Ctrl+C to stop"
+        check_lock
+        create_lock
+        log "🌙 NightWatcher auto-commit started (PID: $$, checking every 5 minutes)"
 
         while true; do
             do_commit
