@@ -1,14 +1,23 @@
 import { createLogger } from '../utils/logger.js';
 import { fetchWorkflowLogs, findFailingJobLog, truncateLog } from '../github/logs.js';
 import { analyzeFailureLogs } from '../agents/analyzer.js';
-import { reproduceFailure, cleanupWorkDir } from '../sandbox/runner.js';
+import { reproduceFailure, runTestsInWorkDir, cleanupWorkDir } from '../sandbox/runner.js';
+import {
+  generateRegressionTest,
+  readSourceFile,
+  readExistingTests,
+  insertTestIntoFile
+} from '../agents/test-generator.js';
+import { generateFix, applyFix, revertFix, readSourceCode } from '../agents/fixer.js';
 import {
   createFailure,
   updateFailureAnalysis,
   updateFailureStatus,
   saveHealingResult
 } from '../db/client.js';
-import type { WorkflowRunPayload, HealingResult, FailureAnalysis } from '../types.js';
+import type { WorkflowRunPayload, HealingResult, FailureAnalysis, FixAttempt } from '../types.js';
+
+const MAX_FIX_ATTEMPTS = 3;
 
 const logger = createLogger('Orchestrator');
 
@@ -135,29 +144,129 @@ export async function processFailure(payload: WorkflowRunPayload): Promise<Heali
     });
 
     // Store workDir for later steps
-    const workDir = reproResult.workDir;
+    const workDir = reproResult.workDir!;
 
-    // Step 4: Generate regression test (TODO)
-    logger.info('Step 4: Test generation (not yet implemented)');
-    // TODO: Generate test that captures the bug
+    // Step 4: Generate regression test
+    logger.info('Step 4: Generating regression test...');
+    updateFailureStatus(failureId, 'generating_test');
 
-    // Step 5: Attempt fix (TODO)
-    logger.info('Step 5: Fix attempts (not yet implemented)');
-    // TODO: Fix loop with max 3 attempts
+    const sourceCode = readSourceFile(workDir, analysis.file_path);
+    const testFilePath = `tests/test_${analysis.file_path.split('/').pop()?.replace('.py', '')}.py`;
+    const existingTests = readExistingTests(workDir, testFilePath);
 
-    // Step 6: Create PR or escalate (TODO)
-    logger.info('Step 6: PR creation (not yet implemented)');
-    // TODO: Create PR with fix + test
-    // TODO: Or create escalation issue if fix failed
+    const generatedTest = await generateRegressionTest({
+      analysis,
+      sourceCode,
+      existingTests,
+      filePath: analysis.file_path,
+    });
 
-    // Cleanup work directory
-    if (workDir) {
-      cleanupWorkDir(workDir);
+    result.generated_test = generatedTest;
+    logger.info('Test generated', { testName: generatedTest.test_name });
+
+    // Insert test into file (optional - we can verify it works first)
+    // insertTestIntoFile(workDir, generatedTest.target_file, generatedTest);
+
+    // Step 5: Attempt fix (up to MAX_FIX_ATTEMPTS)
+    logger.info('Step 5: Attempting fixes...');
+    updateFailureStatus(failureId, 'fixing');
+
+    const fixAttempts: FixAttempt[] = [];
+    let fixSucceeded = false;
+
+    for (let attempt = 1; attempt <= MAX_FIX_ATTEMPTS; attempt++) {
+      logger.info(`Fix attempt ${attempt}/${MAX_FIX_ATTEMPTS}`);
+
+      try {
+        // Generate a fix
+        const fix = await generateFix({
+          analysis,
+          sourceCode: readSourceCode(workDir, analysis.file_path),
+          filePath: analysis.file_path,
+          previousAttempts: fixAttempts,
+          testOutput: reproResult.stderr,
+        });
+
+        // Apply the fix
+        const applied = applyFix(workDir, fix);
+
+        if (!applied) {
+          logger.warn('Failed to apply fix', { attempt });
+          fixAttempts.push({
+            attempt_number: attempt,
+            proposed_fix: fix,
+            test_result: 'fail',
+            error_output: 'Failed to apply fix - original code not found',
+          });
+          continue;
+        }
+
+        // Run tests to verify the fix
+        logger.info('Running tests to verify fix...');
+        const testResult = await runTestsInWorkDir(workDir);
+
+        const fixAttempt: FixAttempt = {
+          attempt_number: attempt,
+          proposed_fix: fix,
+          test_result: testResult.exitCode === 0 ? 'pass' : 'fail',
+          error_output: testResult.exitCode !== 0 ? testResult.stderr : undefined,
+        };
+        fixAttempts.push(fixAttempt);
+
+        if (testResult.exitCode === 0) {
+          logger.info('Fix verified - all tests pass!', { attempt });
+          fixSucceeded = true;
+          break;
+        } else {
+          logger.warn('Fix did not resolve all failures', {
+            attempt,
+            exitCode: testResult.exitCode,
+          });
+          // Revert the fix before trying again
+          revertFix(workDir, fix);
+        }
+      } catch (error) {
+        logger.error('Error during fix attempt', {
+          attempt,
+          error: error instanceof Error ? error.message : 'Unknown',
+        });
+        fixAttempts.push({
+          attempt_number: attempt,
+          proposed_fix: {
+            file_path: analysis.file_path,
+            original_code: '',
+            fixed_code: '',
+            explanation: `Error: ${error instanceof Error ? error.message : 'Unknown'}`,
+          },
+          test_result: 'fail',
+          error_output: error instanceof Error ? error.message : 'Unknown error',
+        });
+      }
     }
 
-    // For now, we've completed the reproduction phase
-    updateFailureStatus(failureId, 'reproduced');
-    logger.info('Processing complete (reproduction phase)', { result });
+    result.fix_attempts = fixAttempts;
+
+    // Step 6: Create PR or escalate
+    if (fixSucceeded) {
+      logger.info('Step 6: Creating PR...');
+      updateFailureStatus(failureId, 'creating_pr');
+      // TODO: Create PR with fix + test
+      // For now, just mark as successful
+      result.success = true;
+      updateFailureStatus(failureId, 'fixed');
+      logger.info('Fix successful! PR creation not yet implemented.');
+    } else {
+      logger.info('Step 6: Escalating - fix attempts exhausted');
+      updateFailureStatus(failureId, 'escalated');
+      // TODO: Create escalation issue
+      result.error = `Failed to fix after ${MAX_FIX_ATTEMPTS} attempts`;
+      logger.warn('Escalating to human', { attempts: fixAttempts.length });
+    }
+
+    // Cleanup work directory
+    cleanupWorkDir(workDir);
+
+    logger.info('Processing complete', { success: result.success });
 
     // Save final result to database
     saveHealingResult(result);
