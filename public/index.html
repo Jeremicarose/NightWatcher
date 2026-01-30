@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nightwatch Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            night: {
+              50: '#f0f4ff',
+              100: '#e0e8ff',
+              200: '#c7d4fe',
+              300: '#a3b8fc',
+              400: '#7a91f9',
+              500: '#5a6cf4',
+              600: '#4347e8',
+              700: '#3636d4',
+              800: '#2e2eab',
+              900: '#1a1a4e',
+              950: '#0f0f2e',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.5); }
+      50% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.8); }
+    }
+    .status-analyzing { animation: pulse-glow 2s infinite; }
+
+    @keyframes slide-in {
+      from { transform: translateX(-10px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    .animate-slide-in { animation: slide-in 0.3s ease-out; }
+  </style>
+</head>
+<body class="bg-night-950 text-gray-100 min-h-screen">
+  <!-- Header -->
+  <header class="bg-night-900 border-b border-night-700 sticky top-0 z-10">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <span class="text-3xl">🌙</span>
+        <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+          Nightwatch
+        </h1>
+        <span class="text-sm text-gray-500 ml-2">Self-Healing CI Agent</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <div id="connection-status" class="flex items-center gap-2 text-sm">
+          <span class="w-2 h-2 rounded-full bg-green-500"></span>
+          <span class="text-gray-400">Connected</span>
+        </div>
+        <button onclick="refreshData()" class="px-3 py-1.5 bg-night-700 hover:bg-night-600 rounded-lg text-sm transition">
+          ↻ Refresh
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 py-8">
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+      <div class="bg-night-900 rounded-xl p-5 border border-night-700">
+        <div class="text-gray-400 text-sm mb-1">Total Failures</div>
+        <div id="stat-total" class="text-3xl font-bold">-</div>
+      </div>
+      <div class="bg-night-900 rounded-xl p-5 border border-night-700">
+        <div class="text-gray-400 text-sm mb-1">Auto-Fixed</div>
+        <div id="stat-fixed" class="text-3xl font-bold text-green-400">-</div>
+      </div>
+      <div class="bg-night-900 rounded-xl p-5 border border-night-700">
+        <div class="text-gray-400 text-sm mb-1">In Progress</div>
+        <div id="stat-progress" class="text-3xl font-bold text-blue-400">-</div>
+      </div>
+      <div class="bg-night-900 rounded-xl p-5 border border-night-700">
+        <div class="text-gray-400 text-sm mb-1">Escalated</div>
+        <div id="stat-escalated" class="text-3xl font-bold text-yellow-400">-</div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Failures List -->
+      <div class="lg:col-span-2">
+        <div class="bg-night-900 rounded-xl border border-night-700 overflow-hidden">
+          <div class="px-5 py-4 border-b border-night-700 flex items-center justify-between">
+            <h2 class="text-lg font-semibold">Recent Failures</h2>
+            <span id="failure-count" class="text-sm text-gray-500">0 failures</span>
+          </div>
+          <div id="failures-list" class="divide-y divide-night-700">
+            <!-- Failures will be inserted here -->
+            <div class="p-8 text-center text-gray-500">
+              <div class="text-4xl mb-2">🎉</div>
+              <div>No failures yet. Your CI is healthy!</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Detail Panel -->
+      <div class="lg:col-span-1">
+        <div id="detail-panel" class="bg-night-900 rounded-xl border border-night-700 sticky top-24">
+          <div class="px-5 py-4 border-b border-night-700">
+            <h2 class="text-lg font-semibold">Details</h2>
+          </div>
+          <div id="detail-content" class="p-5 text-gray-400 text-center">
+            <div class="text-4xl mb-2">👈</div>
+            <div>Select a failure to view details</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Activity Timeline -->
+    <div class="mt-8">
+      <div class="bg-night-900 rounded-xl border border-night-700 overflow-hidden">
+        <div class="px-5 py-4 border-b border-night-700">
+          <h2 class="text-lg font-semibold">Pipeline Activity</h2>
+        </div>
+        <div id="activity-timeline" class="p-5">
+          <div class="text-gray-500 text-center py-4">No recent activity</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-night-700 mt-12 py-6 text-center text-gray-500 text-sm">
+    Nightwatch v1.0 — Built for VETROX AGENTIC 3.0 Hackathon
+  </footer>
+
+  <script src="/js/dashboard.js"></script>
+</body>
+</html>
