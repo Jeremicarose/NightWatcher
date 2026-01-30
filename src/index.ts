@@ -95,8 +95,13 @@ app.get('/failures', (_req, res) => {
 app.post('/webhook', handleWebhook);
 
 // Serve dashboard for all other routes (SPA fallback)
-app.get('*', (_req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
+app.use((_req, res) => {
+  // Only serve index.html for GET requests that accept HTML
+  if (_req.method === 'GET' && _req.accepts('html')) {
+    res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
+  } else {
+    res.status(404).json({ error: 'Not found' });
+  }
 });
 
 app.listen(port, () => {
