@@ -1,0 +1,40 @@
+# Dependencies (will be installed fresh)
+node_modules/
+
+# Build output (will be rebuilt)
+dist/
+
+# Development files
+*.log
+logs/
+.env
+.env.local
+.env.*.local
+
+# Database (use volume)
+*.db
+data/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# Demo repo (not needed in production)
+demo-repo/
+
+# Test scripts
+scripts/test-*.ts
+scripts/seed-demo-data.ts
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Documentation (optional, can include if you want)
+# *.md
