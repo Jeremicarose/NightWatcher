@@ -9,10 +9,12 @@ import {
   insertTestIntoFile
 } from '../agents/test-generator.js';
 import { generateFix, applyFix, revertFix, readSourceCode } from '../agents/fixer.js';
+import { createFixPR, createEscalationIssue } from '../github/pr.js';
 import {
   createFailure,
   updateFailureAnalysis,
   updateFailureStatus,
+  updateFailureOutcome,
   saveHealingResult
 } from '../db/client.js';
 import type { WorkflowRunPayload, HealingResult, FailureAnalysis, FixAttempt } from '../types.js';
@@ -250,23 +252,57 @@ export async function processFailure(payload: WorkflowRunPayload): Promise<Heali
     if (fixSucceeded) {
       logger.info('Step 6: Creating PR...');
       updateFailureStatus(failureId, 'creating_pr');
-      // TODO: Create PR with fix + test
-      // For now, just mark as successful
-      result.success = true;
-      updateFailureStatus(failureId, 'fixed');
-      logger.info('Fix successful! PR creation not yet implemented.');
+
+      // Get the successful fix
+      const successfulAttempt = fixAttempts.find(a => a.test_result === 'pass')!;
+
+      const prResult = await createFixPR({
+        repo,
+        sha,
+        branch: workflow_run.head_branch || 'main',
+        analysis,
+        fix: successfulAttempt.proposed_fix,
+        generatedTest,
+        fixAttempts,
+      });
+
+      if (prResult.success) {
+        result.success = true;
+        result.pr_url = prResult.pr_url;
+        updateFailureOutcome(failureId, prResult.pr_url);
+        logger.info('PR created successfully!', { pr_url: prResult.pr_url });
+      } else {
+        result.error = `Fix succeeded but PR creation failed: ${prResult.error}`;
+        updateFailureStatus(failureId, 'pr_failed', result.error);
+        logger.error('PR creation failed', { error: prResult.error });
+      }
     } else {
       logger.info('Step 6: Escalating - fix attempts exhausted');
-      updateFailureStatus(failureId, 'escalated');
-      // TODO: Create escalation issue
+      updateFailureStatus(failureId, 'escalating');
+
+      const issueResult = await createEscalationIssue({
+        repo,
+        sha,
+        branch: workflow_run.head_branch || 'main',
+        analysis,
+        fixAttempts,
+        error: `Failed to fix after ${MAX_FIX_ATTEMPTS} attempts`,
+      });
+
+      if (issueResult.success) {
+        result.issue_url = issueResult.issue_url;
+        updateFailureOutcome(failureId, undefined, issueResult.issue_url);
+        logger.info('Escalation issue created', { issue_url: issueResult.issue_url });
+      }
+
       result.error = `Failed to fix after ${MAX_FIX_ATTEMPTS} attempts`;
-      logger.warn('Escalating to human', { attempts: fixAttempts.length });
+      updateFailureStatus(failureId, 'escalated');
     }
 
     // Cleanup work directory
     cleanupWorkDir(workDir);
 
-    logger.info('Processing complete', { success: result.success });
+    logger.info('Processing complete', { success: result.success, pr_url: result.pr_url });
 
     // Save final result to database
     saveHealingResult(result);
