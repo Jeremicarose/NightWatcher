@@ -3,137 +3,492 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nightwatch Dashboard</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            night: {
-              50: '#f0f4ff',
-              100: '#e0e8ff',
-              200: '#c7d4fe',
-              300: '#a3b8fc',
-              400: '#7a91f9',
-              500: '#5a6cf4',
-              600: '#4347e8',
-              700: '#3636d4',
-              800: '#2e2eab',
-              900: '#1a1a4e',
-              950: '#0f0f2e',
-            }
-          }
-        }
+  <title>Dashboard — Nightwatch</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #e8e8e8;
+      --bg-card: #ffffff;
+      --text-primary: #1a1a1a;
+      --text-secondary: #666666;
+      --text-muted: #999999;
+      --border: #d0d0d0;
+      --border-light: #e0e0e0;
+      --accent-green: #22c55e;
+      --accent-blue: #3b82f6;
+      --accent-yellow: #f59e0b;
+      --accent-red: #ef4444;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* Grid background */
+    .grid-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-image:
+        linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    /* Header */
+    header {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-decoration: none;
+      color: var(--text-primary);
+    }
+
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--text-primary);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1rem;
+    }
+
+    .logo span {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+
+    .header-subtitle {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .status-badge .dot {
+      width: 8px;
+      height: 8px;
+      background: var(--accent-green);
+      border-radius: 50%;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 500;
+      font-size: 0.85rem;
+      text-decoration: none;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-primary);
+      transition: all 0.2s;
+    }
+
+    .btn:hover {
+      border-color: var(--text-secondary);
+    }
+
+    /* Main */
+    main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    /* Stats */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+    }
+
+    .stat-card .label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.25rem;
+    }
+
+    .stat-card .value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 2rem;
+      font-weight: 600;
+    }
+
+    .stat-card .value.green { color: var(--accent-green); }
+    .stat-card .value.blue { color: var(--accent-blue); }
+    .stat-card .value.yellow { color: var(--accent-yellow); }
+
+    /* Content Grid */
+    .content-grid {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    /* Failures List */
+    .failures-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .card-header h2 {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    .card-header span {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .failures-list {
+      max-height: 450px;
+      overflow-y: auto;
+    }
+
+    .failure-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.875rem 1.25rem;
+      border-bottom: 1px solid var(--border-light);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .failure-item:hover {
+      background: var(--bg);
+    }
+
+    .failure-item:last-child {
+      border-bottom: none;
+    }
+
+    .failure-item.selected {
+      background: var(--bg);
+    }
+
+    .failure-left {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .failure-icon {
+      font-size: 1rem;
+    }
+
+    .failure-info .repo {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 500;
+      font-size: 0.9rem;
+    }
+
+    .failure-info .error {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .badge {
+      font-family: 'JetBrains Mono', monospace;
+      padding: 0.3rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .badge.fixed { background: rgba(34, 197, 94, 0.1); color: var(--accent-green); }
+    .badge.analyzing { background: rgba(59, 130, 246, 0.1); color: var(--accent-blue); }
+    .badge.escalated { background: rgba(245, 158, 11, 0.1); color: var(--accent-yellow); }
+    .badge.pending { background: rgba(239, 68, 68, 0.1); color: var(--accent-red); }
+    .badge.failed { background: rgba(107, 114, 128, 0.1); color: var(--text-secondary); }
+
+    /* Details Panel */
+    .details-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .details-content {
+      padding: 1.25rem;
+    }
+
+    .detail-row {
+      margin-bottom: 1rem;
+    }
+
+    .detail-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .detail-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.25rem;
+    }
+
+    .detail-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+    }
+
+    .detail-code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      background: var(--bg);
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      border: 1px solid var(--border-light);
+    }
+
+    .pr-link {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--accent-green);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+
+    .pr-link:hover {
+      text-decoration: underline;
+    }
+
+    /* Activity */
+    .activity-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .activity-list {
+      padding: 1rem 1.25rem;
+    }
+
+    .activity-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 0.5rem 0;
+    }
+
+    .activity-item .icon {
+      font-size: 0.9rem;
+      margin-top: 0.1rem;
+    }
+
+    .activity-item .text {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+    }
+
+    .activity-item .time {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-secondary);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .content-grid {
+        grid-template-columns: 1fr;
       }
     }
-  </script>
-  <style>
-    @keyframes pulse-glow {
-      0%, 100% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.5); }
-      50% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.8); }
-    }
-    .status-analyzing { animation: pulse-glow 2s infinite; }
 
-    @keyframes slide-in {
-      from { transform: translateX(-10px); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      color: var(--text-secondary);
     }
-    .animate-slide-in { animation: slide-in 0.3s ease-out; }
+
+    .empty-state .emoji {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
   </style>
 </head>
-<body class="bg-night-950 text-gray-100 min-h-screen">
-  <!-- Header -->
-  <header class="bg-night-900 border-b border-night-700 sticky top-0 z-10">
-    <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <span class="text-3xl">🌙</span>
-        <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-          Nightwatch
-        </h1>
-        <span class="text-sm text-gray-500 ml-2">Self-Healing CI Agent</span>
+<body>
+  <div class="grid-bg"></div>
+
+  <header>
+    <div class="header-left">
+      <a href="/" class="logo">
+        <div class="logo-icon">🌙</div>
+        <span>Nightwatch</span>
+      </a>
+      <span class="header-subtitle">Self-Healing CI Agent</span>
+    </div>
+    <div class="header-right">
+      <div class="status-badge">
+        <span class="dot"></span>
+        Connected
       </div>
-      <div class="flex items-center gap-4">
-        <div id="connection-status" class="flex items-center gap-2 text-sm">
-          <span class="w-2 h-2 rounded-full bg-green-500"></span>
-          <span class="text-gray-400">Connected</span>
-        </div>
-        <button onclick="refreshData()" class="px-3 py-1.5 bg-night-700 hover:bg-night-600 rounded-lg text-sm transition">
-          ↻ Refresh
-        </button>
-      </div>
+      <button class="btn" onclick="refreshData()">
+        ↻ Refresh
+      </button>
     </div>
   </header>
 
-  <main class="max-w-7xl mx-auto px-4 py-8">
-    <!-- Stats Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-      <div class="bg-night-900 rounded-xl p-5 border border-night-700">
-        <div class="text-gray-400 text-sm mb-1">Total Failures</div>
-        <div id="stat-total" class="text-3xl font-bold">-</div>
+  <main>
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="label">Total Failures</div>
+        <div class="value" id="stat-total">-</div>
       </div>
-      <div class="bg-night-900 rounded-xl p-5 border border-night-700">
-        <div class="text-gray-400 text-sm mb-1">Auto-Fixed</div>
-        <div id="stat-fixed" class="text-3xl font-bold text-green-400">-</div>
+      <div class="stat-card">
+        <div class="label">Auto-Fixed</div>
+        <div class="value green" id="stat-fixed">-</div>
       </div>
-      <div class="bg-night-900 rounded-xl p-5 border border-night-700">
-        <div class="text-gray-400 text-sm mb-1">In Progress</div>
-        <div id="stat-progress" class="text-3xl font-bold text-blue-400">-</div>
+      <div class="stat-card">
+        <div class="label">In Progress</div>
+        <div class="value blue" id="stat-progress">-</div>
       </div>
-      <div class="bg-night-900 rounded-xl p-5 border border-night-700">
-        <div class="text-gray-400 text-sm mb-1">Escalated</div>
-        <div id="stat-escalated" class="text-3xl font-bold text-yellow-400">-</div>
+      <div class="stat-card">
+        <div class="label">Escalated</div>
+        <div class="value yellow" id="stat-escalated">-</div>
       </div>
     </div>
 
-    <!-- Main Content -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Content Grid -->
+    <div class="content-grid">
       <!-- Failures List -->
-      <div class="lg:col-span-2">
-        <div class="bg-night-900 rounded-xl border border-night-700 overflow-hidden">
-          <div class="px-5 py-4 border-b border-night-700 flex items-center justify-between">
-            <h2 class="text-lg font-semibold">Recent Failures</h2>
-            <span id="failure-count" class="text-sm text-gray-500">0 failures</span>
-          </div>
-          <div id="failures-list" class="divide-y divide-night-700">
-            <!-- Failures will be inserted here -->
-            <div class="p-8 text-center text-gray-500">
-              <div class="text-4xl mb-2">🎉</div>
-              <div>No failures yet. Your CI is healthy!</div>
-            </div>
+      <div class="failures-card">
+        <div class="card-header">
+          <h2>Recent Failures</h2>
+          <span id="failure-count">0 failures</span>
+        </div>
+        <div class="failures-list" id="failures-list">
+          <div class="empty-state">
+            <div class="emoji">🎉</div>
+            <div>No failures yet. Your CI is healthy!</div>
           </div>
         </div>
       </div>
 
-      <!-- Detail Panel -->
-      <div class="lg:col-span-1">
-        <div id="detail-panel" class="bg-night-900 rounded-xl border border-night-700 sticky top-24">
-          <div class="px-5 py-4 border-b border-night-700">
-            <h2 class="text-lg font-semibold">Details</h2>
-          </div>
-          <div id="detail-content" class="p-5 text-gray-400 text-center">
-            <div class="text-4xl mb-2">👈</div>
+      <!-- Details Panel -->
+      <div class="details-card">
+        <div class="card-header">
+          <h2>Details</h2>
+        </div>
+        <div class="details-content" id="details-content">
+          <div class="empty-state">
+            <div class="emoji">👈</div>
             <div>Select a failure to view details</div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Activity Timeline -->
-    <div class="mt-8">
-      <div class="bg-night-900 rounded-xl border border-night-700 overflow-hidden">
-        <div class="px-5 py-4 border-b border-night-700">
-          <h2 class="text-lg font-semibold">Pipeline Activity</h2>
-        </div>
-        <div id="activity-timeline" class="p-5">
-          <div class="text-gray-500 text-center py-4">No recent activity</div>
-        </div>
+    <!-- Activity -->
+    <div class="activity-card">
+      <div class="card-header">
+        <h2>Pipeline Activity</h2>
+      </div>
+      <div class="activity-list" id="activity-list">
+        <div class="empty-state">No recent activity</div>
       </div>
     </div>
   </main>
 
-  <!-- Footer -->
-  <footer class="border-t border-night-700 mt-12 py-6 text-center text-gray-500 text-sm">
+  <footer>
     Nightwatch v1.0 — Built for VETROX AGENTIC 3.0 Hackathon
   </footer>
 
