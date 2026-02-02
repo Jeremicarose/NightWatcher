@@ -20,6 +20,7 @@
       --accent-blue: #3b82f6;
       --accent-yellow: #f59e0b;
       --accent-red: #ef4444;
+      --accent-purple: #8b5cf6;
     }
 
     * {
@@ -51,17 +52,43 @@
       z-index: -1;
     }
 
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-10px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .animate-in {
+      animation: fadeIn 0.4s ease-out forwards;
+    }
+
     /* Header */
     header {
       background: var(--bg-card);
       border-bottom: 1px solid var(--border);
-      padding: 1rem 2rem;
+      padding: 0.875rem 2rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
       position: sticky;
       top: 0;
       z-index: 100;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
     }
 
     .header-left {
@@ -76,18 +103,24 @@
       gap: 0.5rem;
       text-decoration: none;
       color: var(--text-primary);
+      transition: opacity 0.2s;
+    }
+
+    .logo:hover {
+      opacity: 0.8;
     }
 
     .logo-icon {
-      width: 32px;
-      height: 32px;
-      background: var(--text-primary);
-      border-radius: 8px;
+      width: 34px;
+      height: 34px;
+      background: linear-gradient(135deg, #1a1a1a 0%, #333 100%);
+      border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
       color: white;
       font-size: 1rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     }
 
     .logo span {
@@ -98,14 +131,16 @@
 
     .header-subtitle {
       font-family: 'JetBrains Mono', monospace;
-      color: var(--text-secondary);
-      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      padding-left: 1rem;
+      border-left: 1px solid var(--border-light);
     }
 
     .header-right {
       display: flex;
       align-items: center;
-      gap: 1.5rem;
+      gap: 1.25rem;
     }
 
     .status-badge {
@@ -113,8 +148,12 @@
       align-items: center;
       gap: 0.5rem;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       color: var(--text-secondary);
+      padding: 0.4rem 0.75rem;
+      background: rgba(34, 197, 94, 0.08);
+      border-radius: 20px;
+      border: 1px solid rgba(34, 197, 94, 0.2);
     }
 
     .status-badge .dot {
@@ -122,6 +161,8 @@
       height: 8px;
       background: var(--accent-green);
       border-radius: 50%;
+      animation: pulse 2s infinite;
+      box-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
     }
 
     .btn {
@@ -132,7 +173,7 @@
       border-radius: 8px;
       font-family: 'JetBrains Mono', monospace;
       font-weight: 500;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       text-decoration: none;
       cursor: pointer;
       border: 1px solid var(--border);
@@ -143,13 +184,19 @@
 
     .btn:hover {
       border-color: var(--text-secondary);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      transform: translateY(-1px);
+    }
+
+    .btn:active {
+      transform: translateY(0);
     }
 
     /* Main */
     main {
-      max-width: 1200px;
+      max-width: 1280px;
       margin: 0 auto;
-      padding: 2rem;
+      padding: 1.5rem 2rem;
     }
 
     /* Stats */
@@ -157,27 +204,54 @@
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 1rem;
-      margin-bottom: 2rem;
+      margin-bottom: 1.5rem;
     }
 
     .stat-card {
       background: var(--bg-card);
       border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 1.25rem;
+      border-radius: 14px;
+      padding: 1.25rem 1.5rem;
+      transition: all 0.25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--border-light);
+      transition: background 0.3s;
+    }
+
+    .stat-card:nth-child(1)::before { background: var(--text-primary); }
+    .stat-card:nth-child(2)::before { background: var(--accent-green); }
+    .stat-card:nth-child(3)::before { background: var(--accent-blue); }
+    .stat-card:nth-child(4)::before { background: var(--accent-yellow); }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
     }
 
     .stat-card .label {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       color: var(--text-secondary);
-      margin-bottom: 0.25rem;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
     .stat-card .value {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 2rem;
-      font-weight: 600;
+      font-size: 2.25rem;
+      font-weight: 700;
+      line-height: 1;
     }
 
     .stat-card .value.green { color: var(--accent-green); }
@@ -187,17 +261,22 @@
     /* Content Grid */
     .content-grid {
       display: grid;
-      grid-template-columns: 1fr 380px;
+      grid-template-columns: 1fr 400px;
       gap: 1.5rem;
-      margin-bottom: 2rem;
+      margin-bottom: 1.5rem;
     }
 
-    /* Failures List */
-    .failures-card {
+    /* Card styles */
+    .card {
       background: var(--bg-card);
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 14px;
       overflow: hidden;
+      transition: box-shadow 0.3s;
+    }
+
+    .card:hover {
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
     }
 
     .card-header {
@@ -206,37 +285,82 @@
       align-items: center;
       padding: 1rem 1.25rem;
       border-bottom: 1px solid var(--border-light);
+      background: linear-gradient(to bottom, var(--bg-card) 0%, rgba(248, 248, 248, 0.5) 100%);
     }
 
     .card-header h2 {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .card-header h2::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+      background: var(--text-primary);
     }
 
     .card-header span {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.8rem;
-      color: var(--text-secondary);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      background: var(--bg);
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
     }
 
+    /* Failures List */
     .failures-list {
-      max-height: 450px;
+      max-height: 420px;
       overflow-y: auto;
+    }
+
+    .failures-list::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .failures-list::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .failures-list::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 3px;
     }
 
     .failure-item {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0.875rem 1.25rem;
+      padding: 1rem 1.25rem;
       border-bottom: 1px solid var(--border-light);
       cursor: pointer;
-      transition: background 0.15s;
+      transition: all 0.15s ease;
+      position: relative;
+    }
+
+    .failure-item::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: transparent;
+      transition: background 0.2s;
     }
 
     .failure-item:hover {
-      background: var(--bg);
+      background: linear-gradient(to right, rgba(0,0,0,0.02), transparent);
+    }
+
+    .failure-item:hover::before {
+      background: var(--accent-blue);
     }
 
     .failure-item:last-child {
@@ -244,60 +368,89 @@
     }
 
     .failure-item.selected {
-      background: var(--bg);
+      background: linear-gradient(to right, rgba(59, 130, 246, 0.06), transparent);
+    }
+
+    .failure-item.selected::before {
+      background: var(--accent-blue);
     }
 
     .failure-left {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: 0.875rem;
     }
 
     .failure-icon {
-      font-size: 1rem;
+      font-size: 1.1rem;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg);
+      border-radius: 8px;
     }
 
     .failure-info .repo {
       font-family: 'JetBrains Mono', monospace;
-      font-weight: 500;
+      font-weight: 600;
       font-size: 0.9rem;
+      margin-bottom: 0.15rem;
     }
 
     .failure-info .error {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       color: var(--text-secondary);
     }
 
     .badge {
       font-family: 'JetBrains Mono', monospace;
-      padding: 0.3rem 0.6rem;
+      padding: 0.35rem 0.7rem;
       border-radius: 6px;
-      font-size: 0.75rem;
-      font-weight: 500;
+      font-size: 0.7rem;
+      font-weight: 600;
       white-space: nowrap;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
     }
 
-    .badge.fixed { background: rgba(34, 197, 94, 0.1); color: var(--accent-green); }
-    .badge.analyzing { background: rgba(59, 130, 246, 0.1); color: var(--accent-blue); }
-    .badge.escalated { background: rgba(245, 158, 11, 0.1); color: var(--accent-yellow); }
-    .badge.pending { background: rgba(239, 68, 68, 0.1); color: var(--accent-red); }
-    .badge.failed { background: rgba(107, 114, 128, 0.1); color: var(--text-secondary); }
+    .badge.fixed {
+      background: rgba(34, 197, 94, 0.1);
+      color: var(--accent-green);
+      border: 1px solid rgba(34, 197, 94, 0.2);
+    }
+    .badge.analyzing {
+      background: rgba(59, 130, 246, 0.1);
+      color: var(--accent-blue);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      animation: pulse 2s infinite;
+    }
+    .badge.escalated {
+      background: rgba(245, 158, 11, 0.1);
+      color: var(--accent-yellow);
+      border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+    .badge.pending {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--accent-red);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+    .badge.failed {
+      background: rgba(107, 114, 128, 0.1);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-light);
+    }
 
     /* Details Panel */
-    .details-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      overflow: hidden;
-    }
-
     .details-content {
       padding: 1.25rem;
     }
 
     .detail-row {
-      margin-bottom: 1rem;
+      margin-bottom: 1.25rem;
+      animation: slideIn 0.3s ease-out forwards;
     }
 
     .detail-row:last-child {
@@ -306,23 +459,27 @@
 
     .detail-label {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.75rem;
-      color: var(--text-secondary);
-      margin-bottom: 0.25rem;
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      margin-bottom: 0.35rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
     .detail-value {
       font-family: 'JetBrains Mono', monospace;
       font-size: 0.9rem;
+      font-weight: 500;
     }
 
     .detail-code {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       background: var(--bg);
-      padding: 0.5rem 0.75rem;
-      border-radius: 6px;
+      padding: 0.6rem 0.875rem;
+      border-radius: 8px;
       border: 1px solid var(--border-light);
+      color: var(--accent-red);
     }
 
     .pr-link {
@@ -330,58 +487,90 @@
       color: var(--accent-green);
       text-decoration: none;
       font-size: 0.9rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.4rem 0.75rem;
+      background: rgba(34, 197, 94, 0.08);
+      border-radius: 6px;
+      transition: all 0.2s;
     }
 
     .pr-link:hover {
-      text-decoration: underline;
+      background: rgba(34, 197, 94, 0.15);
+      transform: translateX(2px);
     }
 
     /* Activity */
-    .activity-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      overflow: hidden;
-    }
-
     .activity-list {
-      padding: 1rem 1.25rem;
+      padding: 0.75rem 1.25rem;
     }
 
     .activity-item {
       display: flex;
       align-items: flex-start;
-      gap: 0.75rem;
-      padding: 0.5rem 0;
+      gap: 1rem;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border-light);
+      animation: slideIn 0.3s ease-out forwards;
+    }
+
+    .activity-item:last-child {
+      border-bottom: none;
     }
 
     .activity-item .icon {
-      font-size: 0.9rem;
-      margin-top: 0.1rem;
+      font-size: 1rem;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg);
+      border-radius: 6px;
+      flex-shrink: 0;
+    }
+
+    .activity-item .content {
+      flex: 1;
     }
 
     .activity-item .text {
       font-family: 'JetBrains Mono', monospace;
       font-size: 0.85rem;
+      font-weight: 500;
+      margin-bottom: 0.15rem;
     }
 
     .activity-item .time {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       color: var(--text-muted);
     }
 
     /* Footer */
     footer {
       text-align: center;
-      padding: 2rem;
-      color: var(--text-secondary);
+      padding: 1.5rem 2rem;
+      color: var(--text-muted);
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.8rem;
+      font-size: 0.75rem;
+      border-top: 1px solid var(--border-light);
+      margin-top: 1rem;
+    }
+
+    footer a {
+      color: var(--text-secondary);
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      color: var(--text-primary);
     }
 
     /* Responsive */
-    @media (max-width: 900px) {
+    @media (max-width: 1024px) {
       .stats-grid {
         grid-template-columns: repeat(2, 1fr);
       }
@@ -391,16 +580,40 @@
       }
     }
 
+    @media (max-width: 600px) {
+      .header-subtitle {
+        display: none;
+      }
+
+      main {
+        padding: 1rem;
+      }
+    }
+
     /* Empty state */
     .empty-state {
       text-align: center;
-      padding: 3rem;
+      padding: 3rem 2rem;
       color: var(--text-secondary);
     }
 
     .empty-state .emoji {
-      font-size: 2rem;
-      margin-bottom: 0.5rem;
+      font-size: 2.5rem;
+      margin-bottom: 0.75rem;
+      opacity: 0.8;
+    }
+
+    .empty-state .text {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+    }
+
+    /* Loading skeleton */
+    .skeleton {
+      background: linear-gradient(90deg, var(--bg) 25%, var(--border-light) 50%, var(--bg) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 4px;
     }
   </style>
 </head>
@@ -418,7 +631,7 @@
     <div class="header-right">
       <div class="status-badge">
         <span class="dot"></span>
-        Connected
+        <span>Live</span>
       </div>
       <button class="btn" onclick="refreshData()">
         ↻ Refresh
@@ -429,28 +642,28 @@
   <main>
     <!-- Stats -->
     <div class="stats-grid">
-      <div class="stat-card">
+      <div class="stat-card animate-in" style="animation-delay: 0.05s">
         <div class="label">Total Failures</div>
-        <div class="value" id="stat-total">-</div>
+        <div class="value" id="stat-total">—</div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card animate-in" style="animation-delay: 0.1s">
         <div class="label">Auto-Fixed</div>
-        <div class="value green" id="stat-fixed">-</div>
+        <div class="value green" id="stat-fixed">—</div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card animate-in" style="animation-delay: 0.15s">
         <div class="label">In Progress</div>
-        <div class="value blue" id="stat-progress">-</div>
+        <div class="value blue" id="stat-progress">—</div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card animate-in" style="animation-delay: 0.2s">
         <div class="label">Escalated</div>
-        <div class="value yellow" id="stat-escalated">-</div>
+        <div class="value yellow" id="stat-escalated">—</div>
       </div>
     </div>
 
     <!-- Content Grid -->
     <div class="content-grid">
       <!-- Failures List -->
-      <div class="failures-card">
+      <div class="card animate-in" style="animation-delay: 0.25s">
         <div class="card-header">
           <h2>Recent Failures</h2>
           <span id="failure-count">0 failures</span>
@@ -458,38 +671,41 @@
         <div class="failures-list" id="failures-list">
           <div class="empty-state">
             <div class="emoji">🎉</div>
-            <div>No failures yet. Your CI is healthy!</div>
+            <div class="text">No failures yet. Your CI is healthy!</div>
           </div>
         </div>
       </div>
 
       <!-- Details Panel -->
-      <div class="details-card">
+      <div class="card animate-in" style="animation-delay: 0.3s">
         <div class="card-header">
           <h2>Details</h2>
         </div>
         <div class="details-content" id="details-content">
           <div class="empty-state">
             <div class="emoji">👈</div>
-            <div>Select a failure to view details</div>
+            <div class="text">Select a failure to view details</div>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Activity -->
-    <div class="activity-card">
+    <div class="card animate-in" style="animation-delay: 0.35s">
       <div class="card-header">
         <h2>Pipeline Activity</h2>
       </div>
       <div class="activity-list" id="activity-list">
-        <div class="empty-state">No recent activity</div>
+        <div class="empty-state">
+          <div class="text">No recent activity</div>
+        </div>
       </div>
     </div>
   </main>
 
   <footer>
-    Nightwatch v1.0 — Built for VETROX AGENTIC 3.0 Hackathon
+    Nightwatch v1.0 — Built for <strong>VETROX AGENTIC 3.0 Hackathon</strong> ·
+    <a href="https://github.com/Jeremicarose/NightWatcher" target="_blank">GitHub</a>
   </footer>
 
   <script src="/js/dashboard.js"></script>
