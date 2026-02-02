@@ -27,10 +27,7 @@ const port = process.env.PORT || 3000;
 // Parse JSON bodies (GitHub sends JSON payloads)
 app.use(express.json());
 
-// Serve static files (dashboard)
-app.use(express.static(path.join(__dirname, '..', 'public')));
-
-// Landing page
+// Landing page (must be before static middleware)
 app.get('/', (_req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'landing.html'));
 });
@@ -39,6 +36,9 @@ app.get('/', (_req, res) => {
 app.get('/dashboard', (_req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
+
+// Serve static files (JS, CSS, images)
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // Health check endpoint
 app.get('/health', (_req, res) => {
