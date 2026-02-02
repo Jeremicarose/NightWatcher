@@ -7,22 +7,10 @@
 
 import { Octokit } from '@octokit/rest';
 import { createLogger } from '../utils/logger.js';
+import { getAppOctokit } from './app-auth.js';
 import type { FailureAnalysis, ProposedFix, GeneratedTest, FixAttempt } from '../types.js';
 
 const logger = createLogger('PRCreator');
-
-/**
- * Get authenticated Octokit client.
- */
-function getOctokit(): Octokit {
-  const token = process.env.GITHUB_TOKEN;
-
-  if (!token) {
-    throw new Error('GITHUB_TOKEN is not configured');
-  }
-
-  return new Octokit({ auth: token });
-}
 
 /**
  * Parse owner and repo from full repo name.
@@ -65,7 +53,7 @@ export async function createFixPR(context: PRContext): Promise<PRResult> {
   logger.info('Creating fix PR', { repo, sha: sha.substring(0, 7) });
 
   try {
-    const octokit = getOctokit();
+    const octokit = await getAppOctokit(repo);
 
     // Generate branch name
     const branchName = `nightwatch/fix-${sha.substring(0, 7)}-${Date.now()}`;
