@@ -30,6 +30,16 @@ app.use(express.json());
 // Serve static files (dashboard)
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
+// Landing page
+app.get('/', (_req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'landing.html'));
+});
+
+// Dashboard
+app.get('/dashboard', (_req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
+});
+
 // Health check endpoint
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
