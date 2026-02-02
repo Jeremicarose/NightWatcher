@@ -5,7 +5,6 @@
  * Uses Octokit to interact with GitHub API.
  */
 
-import { Octokit } from '@octokit/rest';
 import { createLogger } from '../utils/logger.js';
 import { getAppOctokit } from './app-auth.js';
 import type { FailureAnalysis, ProposedFix, GeneratedTest, FixAttempt } from '../types.js';
@@ -297,7 +296,7 @@ export async function createEscalationIssue(context: IssueContext): Promise<Issu
   logger.info('Creating escalation issue', { repo, sha: sha.substring(0, 7) });
 
   try {
-    const octokit = getOctokit();
+    const octokit = await getAppOctokit(repo);
 
     const issueBody = generateIssueBody(context);
 
