@@ -18,7 +18,9 @@ let db: Database.Database | null = null;
 export function initDatabase(dbPath?: string): Database.Database {
   if (db) return db;
 
-  const finalPath = dbPath || path.join(process.cwd(), 'nightwatch.db');
+  // In production (Docker), use /app/data for persistence
+  const dataDir = process.env.NODE_ENV === 'production' ? '/app/data' : process.cwd();
+  const finalPath = dbPath || path.join(dataDir, 'nightwatch.db');
   logger.info('Initializing database', { path: finalPath });
 
   db = new Database(finalPath);
