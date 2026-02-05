@@ -26,12 +26,12 @@ const logger = createLogger('Orchestrator');
 /**
  * Main entry point for processing a CI failure.
  * This orchestrates the full healing pipeline:
- * 1. Fetch logs
- * 2. Analyze failure
- * 3. Reproduce in sandbox (TODO)
- * 4. Generate test (TODO)
- * 5. Attempt fix (TODO)
- * 6. Create PR or escalate (TODO)
+ * 1. Fetch logs from GitHub Actions
+ * 2. Analyze failure with Gemini
+ * 3. Reproduce in Docker sandbox
+ * 4. Generate regression test
+ * 5. Attempt fix (up to 3 iterations)
+ * 6. Create PR or escalate via issue
  */
 export async function processFailure(payload: WorkflowRunPayload): Promise<HealingResult> {
   const { repository, workflow_run } = payload;
@@ -108,7 +108,21 @@ export async function processFailure(payload: WorkflowRunPayload): Promise<Heali
     if (analysis.confidence < 0.3) {
       result.error = 'Low confidence analysis - escalating to human';
       logger.warn('Analysis confidence too low, will escalate', { confidence: analysis.confidence });
-      // TODO: Create escalation issue
+
+      const issueResult = await createEscalationIssue({
+        repo,
+        sha,
+        branch: workflow_run.head_branch || 'main',
+        analysis,
+        fixAttempts: [],
+        error: `Analysis confidence too low (${(analysis.confidence * 100).toFixed(0)}%) to attempt automated fix`,
+      });
+
+      if (issueResult.success) {
+        result.issue_url = issueResult.issue_url;
+        updateFailureOutcome(failureId, undefined, issueResult.issue_url);
+      }
+      updateFailureStatus(failureId, 'escalated');
       return result;
     }
 
@@ -166,8 +180,8 @@ export async function processFailure(payload: WorkflowRunPayload): Promise<Heali
     result.generated_test = generatedTest;
     logger.info('Test generated', { testName: generatedTest.test_name });
 
-    // Insert test into file (optional - we can verify it works first)
-    // insertTestIntoFile(workDir, generatedTest.target_file, generatedTest);
+    // Insert test into file so the fix loop verifies against it
+    insertTestIntoFile(workDir, generatedTest.target_file, generatedTest);
 
     // Step 5: Attempt fix (up to MAX_FIX_ATTEMPTS)
     logger.info('Step 5: Attempting fixes...');
