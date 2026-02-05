@@ -1,4 +1,4 @@
-import { getOctokit, parseRepoFullName } from './client.js';
+import { getAppOctokit } from './app-auth.js';
 import { createLogger } from '../utils/logger.js';
 import AdmZip from 'adm-zip';
 
@@ -16,10 +16,9 @@ export interface FetchedLogs {
 export async function fetchWorkflowLogs(
   repoFullName: string,
   runId: number,
-  installationId?: number
 ): Promise<FetchedLogs[]> {
-  const octokit = getOctokit(installationId);
-  const { owner, repo } = parseRepoFullName(repoFullName);
+  const octokit = await getAppOctokit(repoFullName);
+  const [owner, repo] = repoFullName.split('/');
 
   logger.info('Fetching workflow logs', { owner, repo, runId });
 

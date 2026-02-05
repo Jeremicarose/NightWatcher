@@ -65,11 +65,7 @@ export async function processFailure(payload: WorkflowRunPayload): Promise<Heali
 
     // Step 1: Fetch CI logs
     logger.info('Step 1: Fetching CI logs...');
-    const logs = await fetchWorkflowLogs(
-      repo,
-      runId,
-      payload.installation?.id
-    );
+    const logs = await fetchWorkflowLogs(repo, runId);
 
     if (logs.length === 0) {
       result.error = 'No logs available for this workflow run';
